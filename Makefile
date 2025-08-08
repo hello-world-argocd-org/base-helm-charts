@@ -28,25 +28,7 @@ install:
 package:
 	helm package $(CHART_DIR)
 
-release:
-	@echo "🚀 Starting Helm chart release..."
-	@sh -c '\
-		current_version=$$(grep "^version:" $(CHART_FILE) | cut -d" " -f2 | tr -d "\r"); \
-		release_version=$$(echo $$current_version | sed "s/-SNAPSHOT//"); \
-		echo "🔖 Releasing version: $$release_version"; \
-		awk -v new_ver="version: $$release_version" '\''{ if ($$1 == "version:") print new_ver; else print }'\'' $(CHART_FILE) > $(CHART_FILE).tmp && mv $(CHART_FILE).tmp $(CHART_FILE); \
-		git add $(CHART_FILE); \
-		git commit -m "[RELEASE] Trigger release of v$$release_version"; \
-		git push; \
-		MAJOR=$$(echo $$release_version | cut -d. -f1); \
-		MINOR=$$(echo $$release_version | cut -d. -f2); \
-		PATCH=$$(echo $$release_version | cut -d. -f3); \
-		NEXT_PATCH=$$(expr $$PATCH + 1); \
-		next_version="$$MAJOR.$$MINOR.$$NEXT_PATCH-SNAPSHOT"; \
-		echo "🔁 Bumping to next dev version: $$next_version"; \
-		awk -v new_ver="version: $$next_version" '\''{ if ($$1 == "version:") print new_ver; else print }'\'' $(CHART_FILE) > $(CHART_FILE).tmp && mv $(CHART_FILE).tmp $(CHART_FILE); \
-		git add $(CHART_FILE); \
-		git commit -m "Start next development cycle: v$$next_version"; \
-		git push; \
-		echo "✅ Done: Released v$$release_version → Bumped to v$$next_version"; \
-	'
+.PHONY: install-kind
+install-kind:
+	helm install test charts/springboot-app \
+		--namespace test --create-namespace --wait
