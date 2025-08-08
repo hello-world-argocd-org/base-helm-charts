@@ -29,23 +29,24 @@ package:
 	helm package $(CHART_DIR)
 
 release:
-	@echo "🚀 Releasing Helm chart"
+	@echo "🚀 Starting Helm chart release..."
 
-	# Read current version (Windows-friendly)
-	@version_line=$$(findstr "^version:" $(CHART_FILE)); \
-	current_version=$$(echo $$version_line | cut -d' ' -f2 | tr -d '\r'); \
-	release_version=$$(echo $$current_version | sed "s/-SNAPSHOT//"); \
+	# Get current version, strip carriage returns
+	@current_version=$$(grep '^version:' $(CHART_FILE) | cut -d' ' -f2 | tr -d '\r'); \
+	release_version=$$(echo $$current_version | sed 's/-SNAPSHOT//'); \
 	echo "🔖 Releasing version: $$release_version"
 
 	# Update Chart.yaml: remove -SNAPSHOT
-	@awk -v rv="$$release_version" 'BEGIN{OFS=FS} /^version:/{$$2=rv} {print}' $(CHART_FILE) > $(CHART_FILE).tmp && mv $(CHART_FILE).tmp $(CHART_FILE)
+	@awk -v new_ver="version: $$release_version" \
+		'{ if ($$1 == "version:") print new_ver; else print $$0 }' \
+		$(CHART_FILE) > $(CHART_FILE).tmp && mv $(CHART_FILE).tmp $(CHART_FILE)
 
-	# Commit and push
+	# Commit and push release version
 	@git add $(CHART_FILE) && \
 	git commit -m "[RELEASE] Trigger release of v$$release_version" && \
 	git push
 
-	# Calculate next version (patch bump)
+	# Calculate next patch version
 	@MAJOR=$$(echo $$release_version | cut -d. -f1); \
 	MINOR=$$(echo $$release_version | cut -d. -f2); \
 	PATCH=$$(echo $$release_version | cut -d. -f3); \
@@ -54,11 +55,13 @@ release:
 	echo "🔁 Bumping to next dev version: $$next_version"
 
 	# Update Chart.yaml again
-	@awk -v nv="$$next_version" 'BEGIN{OFS=FS} /^version:/{$$2=nv} {print}' $(CHART_FILE) > $(CHART_FILE).tmp && mv $(CHART_FILE).tmp $(CHART_FILE)
+	@awk -v new_ver="version: $$next_version" \
+		'{ if ($$1 == "version:") print new_ver; else print $$0 }' \
+		$(CHART_FILE) > $(CHART_FILE).tmp && mv $(CHART_FILE).tmp $(CHART_FILE)
 
-	# Commit and push
+	# Commit and push dev bump
 	@git add $(CHART_FILE) && \
 	git commit -m "Start next development cycle: v$$next_version" && \
 	git push
 
-	@echo "✅ Done: Released v$$release_version → bumped to v$$next_version"
+	@echo "✅ Done: Released v$$release_version → Bumped to $$next_version"
