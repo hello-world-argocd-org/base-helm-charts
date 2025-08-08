@@ -16,7 +16,7 @@ template:
 	helm template myapp $(CHART_DIR) -f $(VALUES_FILE)
 
 ## Validate everything (lint + test)
-validate: lint test
+validate: lint test template
 
 ## Install Helm and plugins (one-time setup)
 install:

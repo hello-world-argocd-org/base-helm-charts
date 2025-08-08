@@ -19,8 +19,5 @@ jobs:
       - name: Install helm-unittest plugin
         run: helm plugin install https://github.com/helm-unittest/helm-unittest
 
-      - name: Lint chart
-        run: make lint
-
-      - name: Run unit tests
-        run: make test
+      - name: Validate
+        run: make validate
