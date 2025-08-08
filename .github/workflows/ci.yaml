@@ -1,23 +1,50 @@
-name: Helm CI
+name: Release Charts
 
 on:
-  pull_request:
   push:
     branches:
       - main
 
 jobs:
-  helm:
+  release:
+    permissions:
+      contents: write
     runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
 
-      - name: Install Helm
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Configure Git
+        run: |
+          git config user.name "$GITHUB_ACTOR"
+          git config user.email "$GITHUB_ACTOR@users.noreply.github.com"
+
+      - name: Set up Helm
         run: |
           curl -fsSL https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
 
       - name: Install helm-unittest plugin
-        run: helm plugin install https://github.com/helm-unittest/helm-unittest
+        run: helm plugin install https://github.com/helm-unittest/helm-unittest || true
 
-      - name: Validate
+      - name: Test
         run: make validate
+
+      - name: Set up Kind
+        uses: helm/kind-action@v1.8.0
+
+      - name: Helm install test on Kind
+        run: |
+          helm install test charts/springboot-app \
+            --namespace test \
+            --create-namespace \
+            --wait
+
+      - name: Release chart
+        uses: helm/chart-releaser-action@v1.7.0
+        with:
+          charts_dir: charts
+        env:
+          CR_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
