@@ -29,20 +29,26 @@ package:
 	helm package $(CHART_DIR)
 
 release:
-	@echo "Preparing Helm chart release..."
-	@version=$$(grep '^version:' $(CHART_FILE) | awk '{print $$2}'); \
-	echo "Releasing version $$version..."; \
+	@echo "🚀 Starting Helm chart release..."
+
+	@current=$$(grep '^version:' $(CHART_FILE) | awk '{print $$2}'); \
+	release_version=$$(echo $$current | sed 's/-SNAPSHOT//'); \
+	echo "🔖 Releasing version: $$release_version"; \
+	sed -i.bak "s/^version:.*/version: $$release_version/" $(CHART_FILE); \
+	rm -f $(CHART_FILE).bak; \
 	git add $(CHART_FILE); \
-	git commit -m "Release Helm chart v$$version" || echo "Already committed"; \
-	git push; \
-	git tag "v$$version"; \
-	git push origin "v$$version"; \
-	echo "Preparing next patch version..."; \
-	IFS='.' read -r major minor patch <<< "$$version"; \
-	next_version="$$major.$$minor.$$((patch + 1))"; \
+	git commit -m "[RELEASE] Trigger release of v$$release_version"; \
+	git push;
+
+	@next_version=$$( \
+		IFS='.' read -r MAJOR MINOR PATCH <<< "$$release_version"; \
+		echo "$$MAJOR.$$MINOR.$$((PATCH + 1))-SNAPSHOT" \
+	); \
+	echo "🔁 Bumping to next dev version: $$next_version"; \
 	sed -i.bak "s/^version:.*/version: $$next_version/" $(CHART_FILE); \
 	rm -f $(CHART_FILE).bak; \
 	git add $(CHART_FILE); \
-	git commit -m "Bump chart version to $$next_version"; \
-	git push; \
-	echo "Released v$$version, bumped to $$next_version"
+	git commit -m "Start next development cycle: v$$next_version"; \
+	git push;
+
+	@echo "✅ Done. Released v$$release_version → next: v$$next_version"
