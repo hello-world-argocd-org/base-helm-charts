@@ -31,7 +31,7 @@ package:
 release:
 	@echo "🚀 Starting Helm chart release..."
 
-	@current=$$(grep '^version:' $(CHART_FILE) | awk '{print $$2}'); \
+	@current=$$(grep '^version:' $(CHART_FILE) | cut -d' ' -f2); \
 	release_version=$$(echo $$current | sed 's/-SNAPSHOT//'); \
 	echo "🔖 Releasing version: $$release_version"; \
 	sed -i.bak "s/^version:.*/version: $$release_version/" $(CHART_FILE); \
@@ -41,7 +41,7 @@ release:
 	git push;
 
 	@next_version=$$( \
-		IFS='.' read -r MAJOR MINOR PATCH <<< "$$release_version"; \
+		IFS='.' read -r MAJOR MINOR PATCH <<< "$$(echo $$release_version | cut -d'-' -f1)"; \
 		echo "$$MAJOR.$$MINOR.$$((PATCH + 1))-SNAPSHOT" \
 	); \
 	echo "🔁 Bumping to next dev version: $$next_version"; \
