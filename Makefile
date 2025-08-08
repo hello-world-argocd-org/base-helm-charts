@@ -30,38 +30,23 @@ package:
 
 release:
 	@echo "🚀 Starting Helm chart release..."
-
-	# Get current version, strip carriage returns
-	@current_version=$$(grep '^version:' $(CHART_FILE) | cut -d' ' -f2 | tr -d '\r'); \
-	release_version=$$(echo $$current_version | sed 's/-SNAPSHOT//'); \
-	echo "🔖 Releasing version: $$release_version"
-
-	# Update Chart.yaml: remove -SNAPSHOT
-	@awk -v new_ver="version: $$release_version" \
-		'{ if ($$1 == "version:") print new_ver; else print $$0 }' \
-		$(CHART_FILE) > $(CHART_FILE).tmp && mv $(CHART_FILE).tmp $(CHART_FILE)
-
-	# Commit and push release version
-	@git add $(CHART_FILE) && \
-	git commit -m "[RELEASE] Trigger release of v$$release_version" && \
-	git push
-
-	# Calculate next patch version
-	@MAJOR=$$(echo $$release_version | cut -d. -f1); \
-	MINOR=$$(echo $$release_version | cut -d. -f2); \
-	PATCH=$$(echo $$release_version | cut -d. -f3); \
-	NEXT_PATCH=$$(expr $$PATCH + 1); \
-	next_version="$$MAJOR.$$MINOR.$$NEXT_PATCH-SNAPSHOT"; \
-	echo "🔁 Bumping to next dev version: $$next_version"
-
-	# Update Chart.yaml again
-	@awk -v new_ver="version: $$next_version" \
-		'{ if ($$1 == "version:") print new_ver; else print $$0 }' \
-		$(CHART_FILE) > $(CHART_FILE).tmp && mv $(CHART_FILE).tmp $(CHART_FILE)
-
-	# Commit and push dev bump
-	@git add $(CHART_FILE) && \
-	git commit -m "Start next development cycle: v$$next_version" && \
-	git push
-
-	@echo "✅ Done: Released v$$release_version → Bumped to $$next_version"
+	@sh -c '\
+		current_version=$$(grep "^version:" $(CHART_FILE) | cut -d" " -f2 | tr -d "\r"); \
+		release_version=$$(echo $$current_version | sed "s/-SNAPSHOT//"); \
+		echo "🔖 Releasing version: $$release_version"; \
+		awk -v new_ver="version: $$release_version" '\''{ if ($$1 == "version:") print new_ver; else print }'\'' $(CHART_FILE) > $(CHART_FILE).tmp && mv $(CHART_FILE).tmp $(CHART_FILE); \
+		git add $(CHART_FILE); \
+		git commit -m "[RELEASE] Trigger release of v$$release_version"; \
+		git push; \
+		MAJOR=$$(echo $$release_version | cut -d. -f1); \
+		MINOR=$$(echo $$release_version | cut -d. -f2); \
+		PATCH=$$(echo $$release_version | cut -d. -f3); \
+		NEXT_PATCH=$$(expr $$PATCH + 1); \
+		next_version="$$MAJOR.$$MINOR.$$NEXT_PATCH-SNAPSHOT"; \
+		echo "🔁 Bumping to next dev version: $$next_version"; \
+		awk -v new_ver="version: $$next_version" '\''{ if ($$1 == "version:") print new_ver; else print }'\'' $(CHART_FILE) > $(CHART_FILE).tmp && mv $(CHART_FILE).tmp $(CHART_FILE); \
+		git add $(CHART_FILE); \
+		git commit -m "Start next development cycle: v$$next_version"; \
+		git push; \
+		echo "✅ Done: Released v$$release_version → Bumped to v$$next_version"; \
+	'
