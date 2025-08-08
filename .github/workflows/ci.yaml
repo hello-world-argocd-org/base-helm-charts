@@ -1,0 +1,26 @@
+name: Helm CI
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+jobs:
+  helm:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Install Helm
+        run: |
+          curl -fsSL https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
+
+      - name: Install helm-unittest plugin
+        run: helm plugin install https://github.com/helm-unittest/helm-unittest
+
+      - name: Lint chart
+        run: make lint
+
+      - name: Run unit tests
+        run: make test

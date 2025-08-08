@@ -1,0 +1,13 @@
+suite: Test deployment rendering
+templates:
+  - templates/deployment.yaml
+set:
+  replicaCount: 2
+  image.repository: ghcr.io/hello-world-argocd-org/hello-world
+  image.tag: v1.0.0
+tests:
+  - it: should render with correct replica count
+    asserts:
+      - equal:
+          path: spec.replicas
+          value: 2
