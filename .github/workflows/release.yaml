@@ -37,7 +37,7 @@ jobs:
           helm package charts/springboot-app --destination .cr-release-packages
 
       - name: Upload to GitHub Release
-        uses: helm/chart-releaser-action@v1.5.0
+        uses: helm/chart-releaser-action@v1.7.0
         with:
           charts_dir: charts
         env:
