@@ -42,8 +42,8 @@ jobs:
             --set image.repository=springcommunity/spring-petclinic-rest \
             --set image.tag=3.4.3 \
             --set service.port=9966 \
-            --set livenessProbe.httpGet.path=/petclinic/actuator/health \
-            --set readinessProbe.httpGet.path=/petclinic/actuator/health
+            --set livenessProbe.httpGet.path=/actuator/health \
+            --set readinessProbe.httpGet.path=/actuator/health
 
       - name: Release chart
         uses: helm/chart-releaser-action@v1.7.0
