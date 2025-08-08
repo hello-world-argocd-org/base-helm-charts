@@ -31,33 +31,34 @@ package:
 release:
 	@echo "🚀 Releasing Helm chart"
 
-	# Extract version
-	@version_line=$$(grep '^version:' $(CHART_FILE)); \
-	current_version=$$(echo $$version_line | sed 's/version:[[:space:]]*//'); \
-	release_version=$$(echo $$current_version | sed 's/-SNAPSHOT//'); \
+	# Read current version (Windows-friendly)
+	@version_line=$$(findstr "^version:" $(CHART_FILE)); \
+	current_version=$$(echo $$version_line | cut -d' ' -f2 | tr -d '\r'); \
+	release_version=$$(echo $$current_version | sed "s/-SNAPSHOT//"); \
 	echo "🔖 Releasing version: $$release_version"
 
-	# Replace version in Chart.yaml (remove -SNAPSHOT)
-	@sed -i.bak "s/^version:.*/version: $$release_version/" $(CHART_FILE); \
-	rm -f $(CHART_FILE).bak
+	# Update Chart.yaml: remove -SNAPSHOT
+	@awk -v rv="$$release_version" 'BEGIN{OFS=FS} /^version:/{$$2=rv} {print}' $(CHART_FILE) > $(CHART_FILE).tmp && mv $(CHART_FILE).tmp $(CHART_FILE)
 
-	# Commit release
-	@git add $(CHART_FILE); \
-	git commit -m "[RELEASE] Trigger release of v$$release_version"; \
+	# Commit and push
+	@git add $(CHART_FILE) && \
+	git commit -m "[RELEASE] Trigger release of v$$release_version" && \
 	git push
 
-	# Bump patch version for next dev
-	@IFS='.'; \
-	set -- $$release_version; \
-	next_patch=$$(($$3 + 1)); \
-	next_version="$$1.$$2.$$next_patch-SNAPSHOT"; \
-	echo "🔁 Next dev version: $$next_version"; \
-	sed -i.bak "s/^version:.*/version: $$next_version/" $(CHART_FILE); \
-	rm -f $(CHART_FILE).bak
+	# Calculate next version (patch bump)
+	@MAJOR=$$(echo $$release_version | cut -d. -f1); \
+	MINOR=$$(echo $$release_version | cut -d. -f2); \
+	PATCH=$$(echo $$release_version | cut -d. -f3); \
+	NEXT_PATCH=$$(expr $$PATCH + 1); \
+	next_version="$$MAJOR.$$MINOR.$$NEXT_PATCH-SNAPSHOT"; \
+	echo "🔁 Bumping to next dev version: $$next_version"
 
-	# Commit dev version bump
-	@git add $(CHART_FILE); \
-	git commit -m "Start next development cycle: v$$next_version"; \
+	# Update Chart.yaml again
+	@awk -v nv="$$next_version" 'BEGIN{OFS=FS} /^version:/{$$2=nv} {print}' $(CHART_FILE) > $(CHART_FILE).tmp && mv $(CHART_FILE).tmp $(CHART_FILE)
+
+	# Commit and push
+	@git add $(CHART_FILE) && \
+	git commit -m "Start next development cycle: v$$next_version" && \
 	git push
 
-	@echo "✅ Release complete: v$$release_version → v$$next_version"
+	@echo "✅ Done: Released v$$release_version → bumped to v$$next_version"
