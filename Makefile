@@ -29,26 +29,35 @@ package:
 	helm package $(CHART_DIR)
 
 release:
-	@echo "🚀 Starting Helm chart release..."
+	@echo "🚀 Releasing Helm chart"
 
-	@current=$$(grep '^version:' $(CHART_FILE) | cut -d' ' -f2); \
-	release_version=$$(echo $$current | sed 's/-SNAPSHOT//'); \
-	echo "🔖 Releasing version: $$release_version"; \
-	sed -i.bak "s/^version:.*/version: $$release_version/" $(CHART_FILE); \
-	rm -f $(CHART_FILE).bak; \
-	git add $(CHART_FILE); \
+	# Extract version
+	@version_line=$$(grep '^version:' $(CHART_FILE)); \
+	current_version=$$(echo $$version_line | sed 's/version:[[:space:]]*//'); \
+	release_version=$$(echo $$current_version | sed 's/-SNAPSHOT//'); \
+	echo "🔖 Releasing version: $$release_version"
+
+	# Replace version in Chart.yaml (remove -SNAPSHOT)
+	@sed -i.bak "s/^version:.*/version: $$release_version/" $(CHART_FILE); \
+	rm -f $(CHART_FILE).bak
+
+	# Commit release
+	@git add $(CHART_FILE); \
 	git commit -m "[RELEASE] Trigger release of v$$release_version"; \
-	git push;
+	git push
 
-	@next_version=$$( \
-		IFS='.' read -r MAJOR MINOR PATCH <<< "$$(echo $$release_version | cut -d'-' -f1)"; \
-		echo "$$MAJOR.$$MINOR.$$((PATCH + 1))-SNAPSHOT" \
-	); \
-	echo "🔁 Bumping to next dev version: $$next_version"; \
+	# Bump patch version for next dev
+	@IFS='.'; \
+	set -- $$release_version; \
+	next_patch=$$(($$3 + 1)); \
+	next_version="$$1.$$2.$$next_patch-SNAPSHOT"; \
+	echo "🔁 Next dev version: $$next_version"; \
 	sed -i.bak "s/^version:.*/version: $$next_version/" $(CHART_FILE); \
-	rm -f $(CHART_FILE).bak; \
-	git add $(CHART_FILE); \
-	git commit -m "Start next development cycle: v$$next_version"; \
-	git push;
+	rm -f $(CHART_FILE).bak
 
-	@echo "✅ Done. Released v$$release_version → next: v$$next_version"
+	# Commit dev version bump
+	@git add $(CHART_FILE); \
+	git commit -m "Start next development cycle: v$$next_version"; \
+	git push
+
+	@echo "✅ Release complete: v$$release_version → v$$next_version"
