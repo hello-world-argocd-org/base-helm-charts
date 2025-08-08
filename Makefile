@@ -1,5 +1,6 @@
 CHART_DIR := charts/springboot-app
 VALUES_FILE := $(CHART_DIR)/values.yaml
+CHART_FILE := $(CHART_DIR)/Chart.yaml
 
 .PHONY: lint test template validate install package bump-patch
 
@@ -29,7 +30,7 @@ package:
 
 bump-patch:
 	@echo "📦 Bumping chart patch version..."
-	@old_version=$$(grep '^version:' $(CHART_DIR)/Chart.yaml | awk '{print $$2}'); \
+	@old_version=$$(grep '^version:' $(CHART_FILE) | awk '{print $$2}'); \
 	IFS='.' read -r major minor patch <<< "$$old_version"; \
 	new_version="$$major.$$minor.$$((patch + 1))"; \
 	echo "🔢 New version: $$new_version"; \
