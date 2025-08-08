@@ -2,7 +2,7 @@ CHART_DIR := charts/springboot-app
 VALUES_FILE := $(CHART_DIR)/values.yaml
 CHART_FILE := $(CHART_DIR)/Chart.yaml
 
-.PHONY: lint test template validate install package bump-patch
+.PHONY: lint test template validate install package release
 
 ## Lint the Helm chart
 lint:
@@ -28,16 +28,21 @@ install:
 package:
 	helm package $(CHART_DIR)
 
-bump-patch:
-	@echo "📦 Bumping chart patch version..."
-	@old_version=$$(grep '^version:' $(CHART_FILE) | awk '{print $$2}'); \
-	IFS='.' read -r major minor patch <<< "$$old_version"; \
-	new_version="$$major.$$minor.$$((patch + 1))"; \
-	echo "🔢 New version: $$new_version"; \
-	sed -i.bak "s/^version:.*/version: $$new_version/" $(CHART_FILE); \
+release:
+	@echo "Preparing Helm chart release..."
+	@version=$$(grep '^version:' $(CHART_FILE) | awk '{print $$2}'); \
+	echo "Releasing version $$version..."; \
+	git add $(CHART_FILE); \
+	git commit -m "Release Helm chart v$$version" || echo "Already committed"; \
+	git push; \
+	git tag "v$$version"; \
+	git push origin "v$$version"; \
+	echo "Preparing next patch version..."; \
+	IFS='.' read -r major minor patch <<< "$$version"; \
+	next_version="$$major.$$minor.$$((patch + 1))"; \
+	sed -i.bak "s/^version:.*/version: $$next_version/" $(CHART_FILE); \
 	rm -f $(CHART_FILE).bak; \
 	git add $(CHART_FILE); \
-	git commit -m "Bump chart version to $$new_version"; \
+	git commit -m "Bump chart version to $$next_version"; \
 	git push; \
-	git tag "v$$new_version"; \
-	git push origin "v$$new_version"
+	echo "Released v$$version, bumped to $$next_version"
