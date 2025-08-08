@@ -29,8 +29,8 @@ jobs:
       - name: Get chart version
         id: chart_version
         run: |
-          VERSION=$(grep '^version:' charts/springboot-app/Chart.yaml | awk '{print $$2}')
-          echo "chart_version=$$VERSION" >> "$GITHUB_OUTPUT"
+          VERSION=$(awk '/^version:/ { print $2 }' charts/springboot-app/Chart.yaml | tr -d '\r')
+          echo "chart_version=$VERSION" >> "$GITHUB_OUTPUT"
 
       - name: Package chart
         run: |
