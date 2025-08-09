@@ -1,13 +1,24 @@
-suite: Test deployment rendering
+suite: Deployment basics
 templates:
+  - templates/configmap.yaml      # needed because Deployment includes it for checksum
   - templates/deployment.yaml
 set:
   replicaCount: 2
   image.repository: ghcr.io/hello-world-argocd-org/hello-world
   image.tag: v1.0.0
+
 tests:
-  - it: should render with correct replica count
+  - it: should render Deployment with correct replica count
+    template: templates/deployment.yaml
     asserts:
+      - isKind:
+          of: Deployment
       - equal:
           path: spec.replicas
           value: 2
+
+  - it: should include checksum annotation for config
+    template: templates/deployment.yaml
+    asserts:
+      - isNotEmpty:
+          path: spec.template.metadata.annotations."checksum/config"

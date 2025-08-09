@@ -40,3 +40,20 @@ resources:
   requests:
     cpu: 250m
     memory: 256Mi
+
+# ================ EXAMPLES OF SETTING ENV VARS ===================
+
+# free-form key/values merged into the ConfigMap data:
+config:
+  SPRING_PROFILES_ACTIVE: default
+  CUSTOM_MESSAGE: "Hello from config"
+
+# optional: supply whole files as config entries
+configFiles: {}
+#  application.yaml: |
+#    server:
+#      shutdown: graceful
+
+# opt-in/override env/envFrom at container level (optional)
+env: []
+envFrom: []

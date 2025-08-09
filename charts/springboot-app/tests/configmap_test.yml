@@ -1,0 +1,12 @@
+suite: ConfigMap renders
+templates:
+  - templates/configmap.yaml
+set:
+  config:
+    CUSTOM_MESSAGE: "hi"
+tests:
+  - it: has custom key
+    asserts:
+      - equal:
+          path: data.CUSTOM_MESSAGE
+          value: "hi"

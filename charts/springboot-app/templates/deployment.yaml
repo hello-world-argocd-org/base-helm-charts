@@ -11,6 +11,9 @@ spec:
     metadata:
       labels:
         app: {{ .Chart.Name }}
+      annotations:
+        # For automated restarting when config maps change
+        checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
     spec:
       containers:
         - name: {{ .Chart.Name }}
@@ -36,6 +39,16 @@ spec:
             periodSeconds: {{ .Values.probes.readiness.periodSeconds }}
             timeoutSeconds: {{ .Values.probes.readiness.timeoutSeconds }}
             failureThreshold: {{ .Values.probes.readiness.failureThreshold }}
+          {{- end }}
+          envFrom:
+            - configMapRef:
+                name: {{ .Chart.Name }}-config
+          {{- with .Values.envFrom }}
+          {{- toYaml . | nindent 10 }}
+          {{- end }}
+          {{- with .Values.env }}
+          env:
+            {{- toYaml . | nindent 12 }}
           {{- end }}
           resources:
             {{- toYaml .Values.resources | nindent 12 }}

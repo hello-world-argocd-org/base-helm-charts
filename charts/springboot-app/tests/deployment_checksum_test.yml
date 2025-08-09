@@ -1,0 +1,20 @@
+suite: Checksum changes with config updates
+templates:
+  - templates/configmap.yaml
+  - templates/deployment.yaml
+
+tests:
+  - it: baseline checksum present
+    asserts:
+      - isNotEmpty:
+          path: spec.template.metadata.annotations."checksum/config"
+
+  - it: checksum changes when config changes
+    set:
+      config:
+        CUSTOM_MESSAGE: "A"
+    asserts:
+      - notEqual:
+          path: spec.template.metadata.annotations."checksum/config"
+          value: "{{ $last_checksum }}"
+    template: templates/deployment.yaml
