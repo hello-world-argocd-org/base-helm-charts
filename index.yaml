@@ -3,6 +3,16 @@ entries:
   springboot-app:
   - apiVersion: v2
     appVersion: "1.0"
+    created: "2025-08-09T14:29:18.969739638Z"
+    description: A base Helm chart for Spring Boot applications
+    digest: d02b5660070f23e1fd53aa75117105acac488c2e5c62466073549368ee50cae4
+    name: springboot-app
+    type: application
+    urls:
+    - https://github.com/hello-world-argocd-org/base-helm-charts/releases/download/springboot-app-0.1.20/springboot-app-0.1.20.tgz
+    version: 0.1.20
+  - apiVersion: v2
+    appVersion: "1.0"
     created: "2025-08-09T13:47:54.05139844Z"
     description: A base Helm chart for Spring Boot applications
     digest: e789242f3de90e1f47cb8ed6ebcbe698e909c124f58360142a1eef063e7be9c9
@@ -21,4 +31,4 @@ entries:
     urls:
     - https://github.com/hello-world-argocd-org/base-helm-charts/releases/download/springboot-app-0.1.18/springboot-app-0.1.18.tgz
     version: 0.1.18
-generated: "2025-08-09T13:47:54.051411254Z"
+generated: "2025-08-09T14:29:18.969750939Z"
