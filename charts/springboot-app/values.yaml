@@ -45,7 +45,6 @@ resources:
 
 # free-form key/values merged into the ConfigMap data:
 config:
-  SPRING_PROFILES_ACTIVE: default
   CUSTOM_MESSAGE: "Hello from config"
 
 # optional: supply whole files as config entries
